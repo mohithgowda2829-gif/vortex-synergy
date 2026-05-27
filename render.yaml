@@ -10,7 +10,6 @@ services:
     name: vortex-synergy-api
     runtime: docker
     plan: free
-    rootDir: backend
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /actuator/health
