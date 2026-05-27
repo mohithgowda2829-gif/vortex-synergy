@@ -9,6 +9,9 @@ class AppFeedback {
     if (raw.contains('SocketException') || raw.contains('Unable to reach the server')) {
       return 'Unable to reach the server. Check your connection and try again.';
     }
+    if (raw.contains('TimeoutException') || raw.contains('taking longer than usual')) {
+      return 'The server is taking longer than usual to respond. If the backend is waking up, wait a few seconds and try again.';
+    }
     if (raw.contains('ClientException')) {
       return 'The request could not be completed. Please try again.';
     }

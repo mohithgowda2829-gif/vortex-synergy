@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,6 +7,8 @@ import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 
 class ApiClient {
+  static const Duration _requestTimeout = Duration(seconds: 60);
+
   Future<dynamic> get(
     String path, {
     String? token,
@@ -26,8 +29,10 @@ class ApiClient {
     );
 
     try {
-      final response = await http.get(uri, headers: _headers(token)).timeout(const Duration(seconds: 20));
+      final response = await http.get(uri, headers: _headers(token)).timeout(_requestTimeout);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(_timeoutMessage);
     } on SocketException {
       throw Exception('Unable to reach the server. Check your connection and try again.');
     } on http.ClientException {
@@ -48,8 +53,10 @@ class ApiClient {
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? <String, dynamic>{}),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(_requestTimeout);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(_timeoutMessage);
     } on SocketException {
       throw Exception('Unable to reach the server. Check your connection and try again.');
     } on http.ClientException {
@@ -70,8 +77,10 @@ class ApiClient {
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? <String, dynamic>{}),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(_requestTimeout);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(_timeoutMessage);
     } on SocketException {
       throw Exception('Unable to reach the server. Check your connection and try again.');
     } on http.ClientException {
@@ -92,8 +101,10 @@ class ApiClient {
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? <String, dynamic>{}),
-      ).timeout(const Duration(seconds: 20));
+      ).timeout(_requestTimeout);
       return _handleResponse(response);
+    } on TimeoutException {
+      throw Exception(_timeoutMessage);
     } on SocketException {
       throw Exception('Unable to reach the server. Check your connection and try again.');
     } on http.ClientException {
@@ -122,13 +133,15 @@ class ApiClient {
           : sanitizedQueryParameters,
     );
     try {
-      final response = await http.get(uri, headers: _headers(token)).timeout(const Duration(seconds: 20));
+      final response = await http.get(uri, headers: _headers(token)).timeout(_requestTimeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return response.body;
       }
       final dynamic decoded = response.body.isEmpty ? null : jsonDecode(response.body);
       final String message = _extractMessage(decoded);
       throw Exception(message);
+    } on TimeoutException {
+      throw Exception(_timeoutMessage);
     } on SocketException {
       throw Exception('Unable to reach the server. Check your connection and try again.');
     } on http.ClientException {
@@ -184,4 +197,7 @@ class ApiClient {
     }
     return withSpaces[0].toUpperCase() + withSpaces.substring(1);
   }
+
+  String get _timeoutMessage =>
+      'The server is taking longer than usual to respond. If the backend is waking up, wait a few seconds and try again.';
 }
