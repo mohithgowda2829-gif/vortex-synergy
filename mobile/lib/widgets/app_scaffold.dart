@@ -17,7 +17,7 @@ class AppScaffold extends StatelessWidget {
 
   final String title;
   final Widget child;
-  final VoidCallback? onLogout;
+  final Future<void> Function()? onLogout;
   final List<Widget> actions;
 
   @override
@@ -71,7 +71,12 @@ class AppScaffold extends StatelessWidget {
             ...actions,
             if (onLogout != null)
               IconButton(
-                onPressed: onLogout,
+                onPressed: () async {
+                  await onLogout!.call();
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).popUntil((Route<dynamic> route) => route.isFirst);
+                  }
+                },
                 icon: const Icon(Icons.logout_rounded),
               ),
           ],
