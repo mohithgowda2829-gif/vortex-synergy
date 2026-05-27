@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: vortex-synergy-postgres
+    environment:
+      POSTGRES_DB: vortex_synergy
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - vortex-synergy-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  vortex-synergy-postgres-data:

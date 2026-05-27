@@ -1,0 +1,15 @@
+package com.vortexsynergy.backend.model.enums;
+
+public enum NotificationType {
+    CLAIM_ACCEPTED,
+    CLAIM_REJECTED,
+    MEDICINE_APPROVED,
+    MEDICINE_REJECTED,
+    MEDICINE_VERIFIED,
+    RESOURCE_EXPIRING_SOON,
+    DELIVERY_ASSIGNED,
+    PICKUP_APPROVED,
+    DELIVERY_COMPLETED,
+    DELIVERY_FAILED,
+    ADMIN_MODERATION
+}

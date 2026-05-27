@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: vortex-synergy-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/vortex_synergy}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 25MB
+
+server:
+  port: ${PORT:8080}
+
+app:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,http://127.0.0.1:*}
+  security:
+    jwt-secret: ${JWT_SECRET:dm9ydGV4LXN5bmVyZ3ktZGVtby1qd3Qtc2VjcmV0LWZvci1sb2NhbC1kZXZlbG9wbWVudC0xMjM0NTY3ODkwMTIzNDU2}
+    jwt-expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+    password-reset-token-hours: ${PASSWORD_RESET_TOKEN_HOURS:1}
+    expose-password-reset-token: ${EXPOSE_PASSWORD_RESET_TOKEN:true}
+  food:
+    safe-window-hours: ${FOOD_SAFE_WINDOW_HOURS:4}
+  claim:
+    reservation-hours: ${CLAIM_RESERVATION_HOURS:4}
+    fairness-window-days: ${CLAIM_FAIRNESS_WINDOW_DAYS:7}
+  scheduler:
+    expiry-check-ms: ${EXPIRY_CHECK_MS:300000}
+  storage:
+    upload-dir: ${UPLOAD_DIR:uploads}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
