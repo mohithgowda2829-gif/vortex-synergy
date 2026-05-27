@@ -15,6 +15,8 @@ public record DeliveryStatusUpdateRequest(
     @DecimalMin(value = "-180.0", message = "Longitude must be at least -180")
     @DecimalMax(value = "180.0", message = "Longitude must be at most 180")
     Double longitude,
+    @Size(max = 32, message = "Pickup code must be 32 characters or fewer")
+    String pickupCode,
     @Size(max = 1000, message = "Note must be 1000 characters or fewer")
     String note
 ) {

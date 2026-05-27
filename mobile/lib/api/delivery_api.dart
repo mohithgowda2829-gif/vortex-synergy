@@ -43,6 +43,7 @@ class DeliveryApi {
   Future<DeliveryTask> pickupApprove(
     String token, {
     required String claimId,
+    required String pickupCode,
     double? latitude,
     double? longitude,
     String? note,
@@ -54,6 +55,7 @@ class DeliveryApi {
         'claimId': claimId,
         'latitude': latitude,
         'longitude': longitude,
+        'pickupCode': pickupCode,
         'note': note,
       },
     ) as Map<String, dynamic>;

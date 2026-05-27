@@ -117,6 +117,13 @@ public class DeliveryService {
         if (!authorized) {
             throw new ForbiddenException("Only the donor or admin can approve pickup");
         }
+        String pickupCode = trimToNull(request.pickupCode());
+        if (pickupCode == null) {
+            throw new BadRequestException("Receiver pickup code is required before approving delivery pickup");
+        }
+        if (claim.getPickupCode() == null || !claim.getPickupCode().equalsIgnoreCase(pickupCode)) {
+            throw new BadRequestException("Pickup code is invalid");
+        }
         if (delivery.getStatus() == DeliveryStatus.PICKUP_APPROVED
             || delivery.getStatus() == DeliveryStatus.IN_TRANSIT
             || delivery.getStatus() == DeliveryStatus.DELIVERED) {
@@ -144,7 +151,7 @@ public class DeliveryService {
             "CLAIM",
             claim.getId().toString(),
             "Donor approved pickup",
-            "{\"orderNumber\":\"" + safeJson(delivery.getOrderNumber()) + "\"}"
+            "{\"orderNumber\":\"" + safeJson(delivery.getOrderNumber()) + "\",\"pickupCodeVerified\":true}"
         );
         return DeliveryResponse.from(delivery);
     }

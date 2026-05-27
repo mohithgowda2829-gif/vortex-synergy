@@ -25,6 +25,7 @@ class HandoverConfirmationScreen extends StatefulWidget {
 class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen> {
   late Future<_DonorPickupData> _future;
   final Map<String, TextEditingController> _controllers = <String, TextEditingController>{};
+  final Map<String, TextEditingController> _deliveryCodeControllers = <String, TextEditingController>{};
 
   @override
   void initState() {
@@ -35,6 +36,9 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
   @override
   void dispose() {
     for (final TextEditingController controller in _controllers.values) {
+      controller.dispose();
+    }
+    for (final TextEditingController controller in _deliveryCodeControllers.values) {
       controller.dispose();
     }
     super.dispose();
@@ -145,6 +149,8 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
 
   Widget _buildDeliveryCard(DeliveryTask delivery) {
     final bool pickupPendingApproval = delivery.status == 'ASSIGNED' || delivery.status == 'PICKUP_PENDING';
+    final TextEditingController codeController =
+        _deliveryCodeControllers.putIfAbsent(delivery.claimId, TextEditingController.new);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
@@ -180,12 +186,22 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
               DetailRow(label: 'Vehicle', value: delivery.vehicleNumber ?? 'Not set'),
               if (delivery.notes != null && delivery.notes!.isNotEmpty) DetailRow(label: 'Notes', value: delivery.notes!),
               const SizedBox(height: 12),
+              TextField(
+                controller: codeController,
+                decoration: const InputDecoration(
+                  labelText: 'Enter receiver pickup code',
+                  helperText: 'Ask the receiver/agent to show the pickup code before approving handover.',
+                ),
+              ),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
                 runSpacing: 12,
                 children: <Widget>[
                   ElevatedButton(
-                    onPressed: pickupPendingApproval ? () => _approvePickup(delivery) : null,
+                    onPressed: pickupPendingApproval
+                        ? () => _approvePickup(delivery, codeController.text.trim())
+                        : null,
                     child: Text(pickupPendingApproval ? 'Approve Pickup' : 'Already Approved'),
                   ),
                   TextButton(
@@ -278,11 +294,17 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
     );
   }
 
-  Future<void> _approvePickup(DeliveryTask delivery) async {
+  Future<void> _approvePickup(DeliveryTask delivery, String pickupCode) async {
+    if (pickupCode.isEmpty) {
+      AppFeedback.showError(context, 'Receiver pickup code is required');
+      return;
+    }
+
     final bool confirmed = await AppFeedback.confirm(
       context,
       title: 'Approve pickup',
-      message: 'Approve ${delivery.agentName ?? 'the assigned agent'} for order ${delivery.orderNumber ?? 'this delivery'}?',
+      message:
+          'Approve ${delivery.agentName ?? 'the assigned agent'} for order ${delivery.orderNumber ?? 'this delivery'} after verifying the receiver pickup code?',
       confirmLabel: 'Approve pickup',
     );
     if (!mounted) {
@@ -294,7 +316,9 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
 
     final AuthProvider auth = context.read<AuthProvider>();
     try {
-      await DeliveryApi(auth.apiClient).pickupApprove(auth.token!, claimId: delivery.claimId);
+      await DeliveryApi(
+        auth.apiClient,
+      ).pickupApprove(auth.token!, claimId: delivery.claimId, pickupCode: pickupCode);
       if (!mounted) return;
       AppFeedback.showSuccess(context, 'Pickup approved for assigned delivery');
       setState(() => _future = _load());
