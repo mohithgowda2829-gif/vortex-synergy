@@ -8,6 +8,38 @@ import '../config/app_config.dart';
 
 class ApiClient {
   static const Duration _requestTimeout = Duration(seconds: 60);
+  static const Duration _warmupRequestTimeout = Duration(seconds: 12);
+  static const Duration _warmupWait = Duration(seconds: 90);
+  static const Duration _warmupPollInterval = Duration(seconds: 3);
+
+  Future<void> waitForServerReady({
+    Duration maxWait = _warmupWait,
+  }) async {
+    final Uri uri = Uri.parse('${AppConfig.origin}/actuator/health');
+    final DateTime deadline = DateTime.now().add(maxWait);
+
+    while (true) {
+      try {
+        final http.Response response = await http
+            .get(uri, headers: const <String, String>{'Accept': 'application/json'})
+            .timeout(_warmupRequestTimeout);
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          return;
+        }
+      } on TimeoutException {
+        // Keep polling until the backend wakes up or the overall deadline is hit.
+      } on SocketException {
+        // Keep polling until the backend wakes up or the overall deadline is hit.
+      } on http.ClientException {
+        // Keep polling until the backend wakes up or the overall deadline is hit.
+      }
+
+      if (DateTime.now().isAfter(deadline)) {
+        throw Exception(_timeoutMessage);
+      }
+      await Future<void>.delayed(_warmupPollInterval);
+    }
+  }
 
   Future<dynamic> get(
     String path, {

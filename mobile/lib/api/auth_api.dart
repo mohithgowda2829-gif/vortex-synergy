@@ -27,6 +27,7 @@ class AuthApi {
   final ApiClient _client;
 
   Future<(String, AppUser)> login(String email, String password) async {
+    await _client.waitForServerReady();
     final Map<String, dynamic> json = await _client.post(
       '/auth/login',
       body: <String, dynamic>{'email': email, 'password': password},

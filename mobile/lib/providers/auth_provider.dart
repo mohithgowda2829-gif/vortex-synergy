@@ -46,6 +46,7 @@ class AuthProvider extends ChangeNotifier {
 
     if (_token != null) {
       try {
+        await apiClient.waitForServerReady();
         _user = await _userApi.me(_token!);
         await refreshNotificationSummary(notify: false);
         await preferences.setString(_userKey, jsonEncode(_user!.toJson()));
