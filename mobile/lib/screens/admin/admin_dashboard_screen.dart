@@ -18,18 +18,48 @@ import 'manage_resources_screen.dart';
 import 'operational_monitoring_screen.dart';
 import 'verify_users_screen.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final AuthProvider auth = context.watch<AuthProvider>();
-    final AdminApi api = AdminApi(auth.apiClient);
-    final DashboardApi dashboardApi = DashboardApi(auth.apiClient);
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
 
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  Future<DashboardSummary>? _analyticsFuture;
+  Future<RoleDashboardSummary>? _summaryFuture;
+  String? _activeToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshFutures();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshFutures();
+  }
+
+  void _refreshFutures() {
+    final AuthProvider auth = context.read<AuthProvider>();
+    final String? token = auth.token;
+    if (token == null || token == _activeToken) {
+      return;
+    }
+    final AdminApi adminApi = AdminApi(auth.apiClient);
+    final DashboardApi dashboardApi = DashboardApi(auth.apiClient);
+    _activeToken = token;
+    _analyticsFuture = adminApi.analytics(token);
+    _summaryFuture = dashboardApi.roleSummary(token);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Admin Dashboard',
-      onLogout: () => auth.logout(),
+      onLogout: () => context.read<AuthProvider>().logout(),
       child: ListView(
         children: <Widget>[
           const HeroHeaderCard(
@@ -43,7 +73,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FutureBuilder<DashboardSummary>(
-            future: api.analytics(auth.token!),
+            future: _analyticsFuture,
             builder: (BuildContext context, AsyncSnapshot<DashboardSummary> snapshot) {
               return Card(
                 child: Padding(
@@ -68,7 +98,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FutureBuilder<RoleDashboardSummary>(
-            future: dashboardApi.roleSummary(auth.token!),
+            future: _summaryFuture,
             builder: (BuildContext context, AsyncSnapshot<RoleDashboardSummary> snapshot) {
               final RoleDashboardSummary? summary = snapshot.data;
               return Column(

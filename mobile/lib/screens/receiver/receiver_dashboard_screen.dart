@@ -15,17 +15,44 @@ import '../common/report_center_screen.dart';
 import 'browse_resources_screen.dart';
 import 'my_claims_screen.dart';
 
-class ReceiverDashboardScreen extends StatelessWidget {
+class ReceiverDashboardScreen extends StatefulWidget {
   const ReceiverDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final AuthProvider auth = context.watch<AuthProvider>();
-    final DashboardApi dashboardApi = DashboardApi(auth.apiClient);
+  State<ReceiverDashboardScreen> createState() => _ReceiverDashboardScreenState();
+}
 
+class _ReceiverDashboardScreenState extends State<ReceiverDashboardScreen> {
+  Future<RoleDashboardSummary>? _summaryFuture;
+  String? _activeToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshFuture();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshFuture();
+  }
+
+  void _refreshFuture() {
+    final AuthProvider auth = context.read<AuthProvider>();
+    final String? token = auth.token;
+    if (token == null || token == _activeToken) {
+      return;
+    }
+    _activeToken = token;
+    _summaryFuture = DashboardApi(auth.apiClient).roleSummary(token);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Receiver Dashboard',
-      onLogout: () => auth.logout(),
+      onLogout: () => context.read<AuthProvider>().logout(),
       child: ListView(
         children: <Widget>[
           const HeroHeaderCard(
@@ -39,7 +66,7 @@ class ReceiverDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FutureBuilder<RoleDashboardSummary>(
-            future: dashboardApi.roleSummary(auth.token!),
+            future: _summaryFuture,
             builder: (BuildContext context, AsyncSnapshot<RoleDashboardSummary> snapshot) {
               final RoleDashboardSummary? summary = snapshot.data;
               return Column(

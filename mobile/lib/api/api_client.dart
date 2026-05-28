@@ -11,9 +11,34 @@ class ApiClient {
   static const Duration _warmupRequestTimeout = Duration(seconds: 12);
   static const Duration _warmupWait = Duration(seconds: 90);
   static const Duration _warmupPollInterval = Duration(seconds: 3);
+  static const Duration _serverReadyCache = Duration(minutes: 2);
+
+  DateTime? _serverReadyUntil;
+  Future<void>? _warmupFuture;
 
   Future<void> waitForServerReady({
     Duration maxWait = _warmupWait,
+  }) async {
+    if (_serverReadyUntil != null && DateTime.now().isBefore(_serverReadyUntil!)) {
+      return;
+    }
+    if (_warmupFuture != null) {
+      return _warmupFuture!;
+    }
+
+    final Future<void> warmup = _waitForServerReadyInternal(maxWait: maxWait);
+    _warmupFuture = warmup;
+    try {
+      await warmup;
+    } finally {
+      if (identical(_warmupFuture, warmup)) {
+        _warmupFuture = null;
+      }
+    }
+  }
+
+  Future<void> _waitForServerReadyInternal({
+    required Duration maxWait,
   }) async {
     final Uri uri = Uri.parse('${AppConfig.origin}/actuator/health');
     final DateTime deadline = DateTime.now().add(maxWait);
@@ -24,6 +49,7 @@ class ApiClient {
             .get(uri, headers: const <String, String>{'Accept': 'application/json'})
             .timeout(_warmupRequestTimeout);
         if (response.statusCode >= 200 && response.statusCode < 300) {
+          _markServerReady();
           return;
         }
       } on TimeoutException {
@@ -167,6 +193,7 @@ class ApiClient {
     try {
       final response = await http.get(uri, headers: _headers(token)).timeout(_requestTimeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
+        _markServerReady();
         return response.body;
       }
       final dynamic decoded = response.body.isEmpty ? null : jsonDecode(response.body);
@@ -193,6 +220,7 @@ class ApiClient {
   dynamic _handleResponse(http.Response response) {
     final dynamic decoded = response.body.isEmpty ? null : jsonDecode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
+      _markServerReady();
       return decoded;
     }
 
@@ -232,4 +260,8 @@ class ApiClient {
 
   String get _timeoutMessage =>
       'The server is taking longer than usual to respond. If the backend is waking up, wait a few seconds and try again.';
+
+  void _markServerReady() {
+    _serverReadyUntil = DateTime.now().add(_serverReadyCache);
+  }
 }

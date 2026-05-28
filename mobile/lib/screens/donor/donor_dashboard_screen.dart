@@ -16,29 +16,63 @@ import 'donor_certificate_screen.dart';
 import 'handover_confirmation_screen.dart';
 import 'my_donations_screen.dart';
 
-class DonorDashboardScreen extends StatelessWidget {
+class DonorDashboardScreen extends StatefulWidget {
   const DonorDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final AuthProvider auth = context.watch<AuthProvider>();
+  State<DonorDashboardScreen> createState() => _DonorDashboardScreenState();
+}
+
+class _DonorDashboardScreenState extends State<DonorDashboardScreen> {
+  Future<RoleDashboardSummary>? _summaryFuture;
+  Future<DonorCertificate>? _certificateFuture;
+  String? _activeToken;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshFutures();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _refreshFutures();
+  }
+
+  void _refreshFutures() {
+    final AuthProvider auth = context.read<AuthProvider>();
+    final String? token = auth.token;
+    if (token == null || token == _activeToken) {
+      return;
+    }
     final DashboardApi dashboardApi = DashboardApi(auth.apiClient);
+    _activeToken = token;
+    _summaryFuture = dashboardApi.roleSummary(token);
+    _certificateFuture = dashboardApi.donorCertificate(token);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String donorName = context.select<AuthProvider, String>(
+      (AuthProvider auth) => auth.user?.fullName ?? 'Donor',
+    );
 
     return AppScaffold(
       title: 'Donor Dashboard',
-      onLogout: () => auth.logout(),
+      onLogout: () => context.read<AuthProvider>().logout(),
       child: ListView(
         children: <Widget>[
           HeroHeaderCard(
             eyebrow: 'Donor command center',
-            title: 'Welcome, ${auth.user?.fullName ?? 'Donor'}',
+            title: 'Welcome, $donorName',
             subtitle: 'List safe food and sealed medicine, monitor impact, and approve handovers with traceable records.',
             icon: Icons.inventory_2_outlined,
             chips: const <String>['Food safety', 'Medicine compliance', 'Pickup approval'],
           ),
           const SizedBox(height: 16),
           FutureBuilder<RoleDashboardSummary>(
-            future: dashboardApi.roleSummary(auth.token!),
+            future: _summaryFuture,
             builder: (BuildContext context, AsyncSnapshot<RoleDashboardSummary> snapshot) {
               final RoleDashboardSummary? summary = snapshot.data;
               return Column(
@@ -89,7 +123,7 @@ class DonorDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FutureBuilder<DonorCertificate>(
-            future: dashboardApi.donorCertificate(auth.token!),
+            future: _certificateFuture,
             builder: (BuildContext context, AsyncSnapshot<DonorCertificate> snapshot) {
               final DonorCertificate? certificate = snapshot.data;
               return Card(

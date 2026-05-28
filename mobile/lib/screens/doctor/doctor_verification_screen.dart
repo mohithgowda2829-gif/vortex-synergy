@@ -27,11 +27,26 @@ class DoctorVerificationScreen extends StatefulWidget {
 
 class _DoctorVerificationScreenState extends State<DoctorVerificationScreen> {
   late Future<List<ResourceItem>> _future;
+  late Future<RoleDashboardSummary> _summaryFuture;
   bool _showHistory = false;
+  String? _activeToken;
 
   @override
   void initState() {
     super.initState();
+    _summaryFuture = _loadSummary();
+    _future = _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final String? token = context.read<AuthProvider>().token;
+    if (token == null || token == _activeToken) {
+      return;
+    }
+    _activeToken = token;
+    _summaryFuture = _loadSummary();
     _future = _load();
   }
 
@@ -41,11 +56,15 @@ class _DoctorVerificationScreenState extends State<DoctorVerificationScreen> {
     return _showHistory ? api.history(auth.token!) : api.pending(auth.token!);
   }
 
+  Future<RoleDashboardSummary> _loadSummary() {
+    final AuthProvider auth = context.read<AuthProvider>();
+    return DashboardApi(auth.apiClient).roleSummary(auth.token!);
+  }
+
   @override
   Widget build(BuildContext context) {
     final AuthProvider auth = context.watch<AuthProvider>();
     final bool approved = auth.user?.adminApproved ?? false;
-    final DashboardApi dashboardApi = DashboardApi(auth.apiClient);
 
     return AppScaffold(
       title: 'Medical Verification',
@@ -63,7 +82,7 @@ class _DoctorVerificationScreenState extends State<DoctorVerificationScreen> {
           ),
           const SizedBox(height: 16),
           FutureBuilder<RoleDashboardSummary>(
-            future: dashboardApi.roleSummary(auth.token!),
+            future: _summaryFuture,
             builder: (BuildContext context, AsyncSnapshot<RoleDashboardSummary> snapshot) {
               final RoleDashboardSummary? summary = snapshot.data;
               if (summary == null) {
@@ -322,7 +341,10 @@ class _DoctorVerificationScreenState extends State<DoctorVerificationScreen> {
       }
       if (!mounted) return;
       AppFeedback.showSuccess(context, approved ? 'Medicine approved' : 'Medicine rejected');
-      setState(() => _future = _load());
+      setState(() {
+        _summaryFuture = _loadSummary();
+        _future = _load();
+      });
     } catch (error) {
       if (!mounted) return;
       AppFeedback.showError(context, error);
