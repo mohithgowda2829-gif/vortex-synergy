@@ -12,6 +12,7 @@ import '../models/app_user.dart';
 
 class AuthProvider extends ChangeNotifier {
   AuthProvider() {
+    apiClient.startKeepAlive();
     initialize();
   }
 
@@ -37,6 +38,12 @@ class AuthProvider extends ChangeNotifier {
   bool get busy => _busy;
   bool get isAuthenticated => _token != null && _user != null;
   int get unreadNotificationCount => _unreadNotificationCount;
+
+  @override
+  void dispose() {
+    apiClient.stopKeepAlive();
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();

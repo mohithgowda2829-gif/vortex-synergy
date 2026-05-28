@@ -27,16 +27,22 @@ class AuthApi {
   final ApiClient _client;
 
   Future<(String, AppUser)> login(String email, String password) async {
-    await _client.waitForServerReady();
-    final Map<String, dynamic> json = await _client.post(
-      '/auth/login',
-      body: <String, dynamic>{'email': email, 'password': password},
-    ) as Map<String, dynamic>;
-
-    return (
-      json['token']?.toString() ?? '',
-      AppUser.fromJson(json['user'] as Map<String, dynamic>),
-    );
+    Object? lastError;
+    for (int attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await _client.waitForServerReady(
+          maxWait: attempt == 0 ? const Duration(seconds: 45) : const Duration(seconds: 90),
+        );
+        return await _loginAttempt(email, password);
+      } catch (error) {
+        lastError = error;
+        if (attempt == 1 || !_isRetryableLoginError(error)) {
+          rethrow;
+        }
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+    }
+    throw lastError ?? Exception('Unable to complete login.');
   }
 
   Future<(String, AppUser)> register({
@@ -84,5 +90,26 @@ class AuthApi {
         'confirmPassword': confirmPassword,
       },
     );
+  }
+
+  Future<(String, AppUser)> _loginAttempt(String email, String password) async {
+    final Map<String, dynamic> json = await _client.post(
+      '/auth/login',
+      body: <String, dynamic>{'email': email, 'password': password},
+    ) as Map<String, dynamic>;
+
+    return (
+      json['token']?.toString() ?? '',
+      AppUser.fromJson(json['user'] as Map<String, dynamic>),
+    );
+  }
+
+  bool _isRetryableLoginError(Object error) {
+    final String message = error.toString();
+    return message.contains('taking longer than usual') ||
+        message.contains('Unable to reach the server') ||
+        message.contains('TimeoutException') ||
+        message.contains('SocketException') ||
+        message.contains('ClientException');
   }
 }
