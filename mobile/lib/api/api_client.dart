@@ -96,6 +96,7 @@ class ApiClient {
     String path, {
     String? token,
     Map<String, String?>? queryParameters,
+    Duration? timeout,
   }) async {
     final Map<String, String>? sanitizedQueryParameters = queryParameters == null
         ? null
@@ -112,7 +113,7 @@ class ApiClient {
     );
 
     try {
-      final response = await http.get(uri, headers: _headers(token)).timeout(_requestTimeout);
+      final response = await http.get(uri, headers: _headers(token)).timeout(timeout ?? _requestTimeout);
       return _handleResponse(response);
     } on TimeoutException {
       throw Exception(_timeoutMessage);
@@ -129,6 +130,7 @@ class ApiClient {
     String path, {
     String? token,
     Map<String, dynamic>? body,
+    Duration? timeout,
   }) async {
     final Uri uri = Uri.parse('${AppConfig.baseUrl}$path');
     try {
@@ -136,7 +138,7 @@ class ApiClient {
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? <String, dynamic>{}),
-      ).timeout(_requestTimeout);
+      ).timeout(timeout ?? _requestTimeout);
       return _handleResponse(response);
     } on TimeoutException {
       throw Exception(_timeoutMessage);
@@ -153,6 +155,7 @@ class ApiClient {
     String path, {
     String? token,
     Map<String, dynamic>? body,
+    Duration? timeout,
   }) async {
     final Uri uri = Uri.parse('${AppConfig.baseUrl}$path');
     try {
@@ -160,7 +163,7 @@ class ApiClient {
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? <String, dynamic>{}),
-      ).timeout(_requestTimeout);
+      ).timeout(timeout ?? _requestTimeout);
       return _handleResponse(response);
     } on TimeoutException {
       throw Exception(_timeoutMessage);
@@ -177,6 +180,7 @@ class ApiClient {
     String path, {
     String? token,
     Map<String, dynamic>? body,
+    Duration? timeout,
   }) async {
     final Uri uri = Uri.parse('${AppConfig.baseUrl}$path');
     try {
@@ -184,7 +188,7 @@ class ApiClient {
         uri,
         headers: _headers(token),
         body: jsonEncode(body ?? <String, dynamic>{}),
-      ).timeout(_requestTimeout);
+      ).timeout(timeout ?? _requestTimeout);
       return _handleResponse(response);
     } on TimeoutException {
       throw Exception(_timeoutMessage);
@@ -201,6 +205,7 @@ class ApiClient {
     String path, {
     String? token,
     Map<String, String?>? queryParameters,
+    Duration? timeout,
   }) async {
     final Map<String, String>? sanitizedQueryParameters = queryParameters == null
         ? null
@@ -216,7 +221,7 @@ class ApiClient {
           : sanitizedQueryParameters,
     );
     try {
-      final response = await http.get(uri, headers: _headers(token)).timeout(_requestTimeout);
+      final response = await http.get(uri, headers: _headers(token)).timeout(timeout ?? _requestTimeout);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         _markServerReady();
         return response.body;
