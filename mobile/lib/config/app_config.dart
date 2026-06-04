@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
-
 class AppConfig {
   static const String _overrideOrigin = String.fromEnvironment('API_ORIGIN');
+  static const String _defaultDeployedOrigin = 'https://vortex-synergy-api.onrender.com';
 
   static String get origin {
     String normalize(String value) {
@@ -11,10 +10,7 @@ class AppConfig {
     if (_overrideOrigin.isNotEmpty) {
       return normalize(_overrideOrigin);
     }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080';
-    }
-    return 'http://127.0.0.1:8080';
+    return _defaultDeployedOrigin;
   }
 
   static String get baseUrl => '$origin/api';

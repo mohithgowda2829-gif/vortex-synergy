@@ -8,38 +8,13 @@ import '../config/app_config.dart';
 
 class ApiClient {
   static const Duration _requestTimeout = Duration(seconds: 60);
-  static const Duration _warmupRequestTimeout = Duration(seconds: 12);
-  static const Duration _warmupWait = Duration(seconds: 90);
-  static const Duration _warmupPollInterval = Duration(seconds: 3);
-  static const Duration _serverReadyCache = Duration(minutes: 2);
-  static const Duration _keepAliveInterval = Duration(minutes: 8);
+  static const Duration _warmupRequestTimeout = Duration(seconds: 6);
+  static const Duration _warmupWait = Duration(seconds: 20);
+  static const Duration _warmupPollInterval = Duration(seconds: 2);
+  static const Duration _serverReadyCache = Duration(minutes: 1);
 
   DateTime? _serverReadyUntil;
   Future<void>? _warmupFuture;
-  Timer? _keepAliveTimer;
-
-  void startKeepAlive() {
-    if (_keepAliveTimer?.isActive ?? false) {
-      return;
-    }
-    unawaited(pingServer());
-    _keepAliveTimer = Timer.periodic(_keepAliveInterval, (_) {
-      unawaited(pingServer());
-    });
-  }
-
-  void stopKeepAlive() {
-    _keepAliveTimer?.cancel();
-    _keepAliveTimer = null;
-  }
-
-  Future<void> pingServer() async {
-    try {
-      await waitForServerReady(maxWait: const Duration(seconds: 45));
-    } catch (_) {
-      // Best-effort keepalive only.
-    }
-  }
 
   Future<void> waitForServerReady({
     Duration maxWait = _warmupWait,

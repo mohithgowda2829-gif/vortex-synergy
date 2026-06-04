@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../admin/admin_dashboard_screen.dart';
-import '../auth/login_screen.dart';
+import '../auth/landing_screen.dart';
 import '../auth/splash_screen.dart';
 import '../doctor/doctor_verification_screen.dart';
 import '../donor/donor_dashboard_screen.dart';
@@ -20,7 +20,7 @@ class RootShell extends StatelessWidget {
           return const SplashScreen();
         }
         if (!auth.isAuthenticated) {
-          return const LoginScreen();
+          return const LandingScreen();
         }
 
         switch (auth.user!.role) {
@@ -33,7 +33,7 @@ class RootShell extends StatelessWidget {
           case 'ADMIN':
             return const AdminDashboardScreen();
           default:
-            return const LoginScreen();
+            return const LandingScreen();
         }
       },
     );

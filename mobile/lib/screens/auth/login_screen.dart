@@ -104,6 +104,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final AuthProvider auth = context.read<AuthProvider>();
     try {
       await auth.login(_emailController.text.trim(), _passwordController.text);
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
       AppFeedback.showError(context, error);

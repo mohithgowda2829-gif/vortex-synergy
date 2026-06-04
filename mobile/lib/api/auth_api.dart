@@ -25,34 +25,19 @@ class AuthApi {
   AuthApi(this._client);
 
   final ApiClient _client;
-  static const Duration _fastLoginAttemptTimeout = Duration(seconds: 25);
+  static const Duration _fastLoginAttemptTimeout = Duration(seconds: 18);
 
   Future<(String, AppUser)> login(String email, String password) async {
-    Object? lastError;
     try {
       return await _loginAttempt(email, password, timeout: _fastLoginAttemptTimeout);
     } catch (error) {
-      lastError = error;
       if (!_isRetryableLoginError(error)) {
         rethrow;
       }
     }
 
-    for (int attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        await _client.waitForServerReady(
-          maxWait: attempt == 0 ? const Duration(seconds: 20) : const Duration(seconds: 35),
-        );
-        return await _loginAttempt(email, password, timeout: _fastLoginAttemptTimeout);
-      } catch (error) {
-        lastError = error;
-        if (attempt == 1 || !_isRetryableLoginError(error)) {
-          rethrow;
-        }
-        await Future<void>.delayed(const Duration(seconds: 2));
-      }
-    }
-    throw lastError ?? Exception('Unable to complete login.');
+    await _client.waitForServerReady(maxWait: const Duration(seconds: 12));
+    return _loginAttempt(email, password, timeout: _fastLoginAttemptTimeout);
   }
 
   Future<(String, AppUser)> register({

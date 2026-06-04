@@ -12,7 +12,6 @@ import '../models/app_user.dart';
 
 class AuthProvider extends ChangeNotifier {
   AuthProvider() {
-    apiClient.startKeepAlive();
     initialize();
   }
 
@@ -39,30 +38,13 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _token != null && _user != null;
   int get unreadNotificationCount => _unreadNotificationCount;
 
-  @override
-  void dispose() {
-    apiClient.stopKeepAlive();
-    super.dispose();
-  }
-
   Future<void> initialize() async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
-    _token = preferences.getString(_tokenKey);
-    final String? userJson = preferences.getString(_userKey);
-    if (userJson != null) {
-      _user = AppUser.fromJson(jsonDecode(userJson) as Map<String, dynamic>);
-    }
-
-    if (_token != null) {
-      try {
-        await apiClient.waitForServerReady();
-        _user = await _userApi.me(_token!);
-        await preferences.setString(_userKey, jsonEncode(_user!.toJson()));
-        _refreshNotificationSummaryInBackground(notify: true);
-      } catch (_) {
-        await logout();
-      }
-    }
+    await preferences.remove(_tokenKey);
+    await preferences.remove(_userKey);
+    _token = null;
+    _user = null;
+    _unreadNotificationCount = 0;
 
     _initialized = true;
     notifyListeners();
@@ -130,9 +112,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> prewarmServer() async {
     try {
-      await apiClient.waitForServerReady(maxWait: const Duration(seconds: 45));
+      await apiClient.waitForServerReady(maxWait: const Duration(seconds: 12));
     } catch (_) {
-      // Best-effort warmup for sleeping demo backends.
+      // Best-effort warmup only.
     }
   }
 
@@ -219,4 +201,5 @@ class AuthProvider extends ChangeNotifier {
     _notificationRefreshTask = task;
     await task;
   }
+
 }
