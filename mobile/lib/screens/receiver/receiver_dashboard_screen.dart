@@ -13,6 +13,7 @@ import '../../widgets/section_title.dart';
 import '../../widgets/verification_banner.dart';
 import '../common/report_center_screen.dart';
 import 'browse_resources_screen.dart';
+import 'inventory_screen.dart';
 import 'my_claims_screen.dart';
 
 class ReceiverDashboardScreen extends StatefulWidget {
@@ -154,6 +155,17 @@ class _ReceiverDashboardScreenState extends State<ReceiverDashboardScreen> {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(builder: (_) => const MyClaimsScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: 12),
+          DashboardActionCard(
+            title: 'Inventory',
+            subtitle: 'Manage received stock, branch storage, low-stock items, and expiry-sensitive inventory.',
+            icon: Icons.inventory_2_outlined,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const InventoryScreen()),
               );
             },
           ),

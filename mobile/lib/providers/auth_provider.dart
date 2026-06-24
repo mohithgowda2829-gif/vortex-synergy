@@ -30,6 +30,7 @@ class AuthProvider extends ChangeNotifier {
   bool _busy = false;
   int _unreadNotificationCount = 0;
   Future<void>? _notificationRefreshTask;
+  Timer? _notificationPollingTimer;
 
   AppUser? get user => _user;
   String? get token => _token;
@@ -37,6 +38,12 @@ class AuthProvider extends ChangeNotifier {
   bool get busy => _busy;
   bool get isAuthenticated => _token != null && _user != null;
   int get unreadNotificationCount => _unreadNotificationCount;
+
+  @override
+  void dispose() {
+    _notificationPollingTimer?.cancel();
+    super.dispose();
+  }
 
   Future<void> initialize() async {
     final SharedPreferences preferences = await SharedPreferences.getInstance();
@@ -48,6 +55,7 @@ class AuthProvider extends ChangeNotifier {
 
     _initialized = true;
     notifyListeners();
+    _startNotificationPolling();
   }
 
   Future<void> login(String email, String password) async {
@@ -200,6 +208,16 @@ class AuthProvider extends ChangeNotifier {
     }();
     _notificationRefreshTask = task;
     await task;
+  }
+
+  void _startNotificationPolling() {
+    _notificationPollingTimer?.cancel();
+    _notificationPollingTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_token == null) {
+        return;
+      }
+      unawaited(_ensureNotificationSummary(notify: true));
+    });
   }
 
 }

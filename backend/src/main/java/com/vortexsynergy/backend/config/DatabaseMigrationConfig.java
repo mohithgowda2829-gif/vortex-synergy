@@ -72,5 +72,35 @@ public class DatabaseMigrationConfig implements ApplicationRunner {
             )
             """
         );
+
+        jdbcTemplate.execute(
+            """
+            ALTER TABLE IF EXISTS notifications
+            DROP CONSTRAINT IF EXISTS notifications_type_check
+            """
+        );
+        jdbcTemplate.execute(
+            """
+            ALTER TABLE IF EXISTS notifications
+            ADD CONSTRAINT notifications_type_check
+            CHECK (
+                type IN (
+                    'CLAIM_ACCEPTED',
+                    'CLAIM_REJECTED',
+                    'MEDICINE_APPROVED',
+                    'MEDICINE_REJECTED',
+                    'MEDICINE_VERIFIED',
+                    'RESOURCE_EXPIRING_SOON',
+                    'DELIVERY_ASSIGNED',
+                    'PICKUP_APPROVED',
+                    'DELIVERY_COMPLETED',
+                    'DELIVERY_FAILED',
+                    'ADMIN_MODERATION',
+                    'CHAT_MESSAGE',
+                    'INVENTORY_LOW_STOCK'
+                )
+            )
+            """
+        );
     }
 }

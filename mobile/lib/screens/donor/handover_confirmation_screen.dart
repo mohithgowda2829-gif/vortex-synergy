@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,6 +15,8 @@ import '../../widgets/detail_row.dart';
 import '../../widgets/empty_state_card.dart';
 import '../../widgets/section_title.dart';
 import '../../widgets/status_chip.dart';
+import '../common/chat_screen.dart';
+import '../common/qr_scanner_screen.dart';
 import '../common/timeline_screen.dart';
 
 class HandoverConfirmationScreen extends StatefulWidget {
@@ -198,11 +202,28 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
                 spacing: 12,
                 runSpacing: 12,
                 children: <Widget>[
+                  OutlinedButton(
+                    onPressed: () => _scanDeliveryQr(delivery.claimId, codeController),
+                    child: const Text('Scan QR'),
+                  ),
                   ElevatedButton(
                     onPressed: pickupPendingApproval
                         ? () => _approvePickup(delivery, codeController.text.trim())
                         : null,
                     child: Text(pickupPendingApproval ? 'Approve Pickup' : 'Already Approved'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ChatScreen(
+                            claimId: delivery.claimId,
+                            title: 'Delivery Chat',
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Open Chat'),
                   ),
                   TextButton(
                     onPressed: () {
@@ -268,9 +289,26 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
                 spacing: 12,
                 runSpacing: 12,
                 children: <Widget>[
+                  OutlinedButton(
+                    onPressed: () => _scanDeliveryQr(claim.id, controller),
+                    child: const Text('Scan QR'),
+                  ),
                   ElevatedButton(
                     onPressed: () => _completeHandover(claim, controller.text.trim()),
                     child: const Text('Confirm Self Pickup'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ChatScreen(
+                            claimId: claim.id,
+                            title: 'Claim Chat',
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Open Chat'),
                   ),
                   TextButton(
                     onPressed: () {
@@ -356,6 +394,25 @@ class _HandoverConfirmationScreenState extends State<HandoverConfirmationScreen>
     } catch (error) {
       if (!mounted) return;
       AppFeedback.showError(context, error);
+    }
+  }
+
+  Future<void> _scanDeliveryQr(String claimId, TextEditingController controller) async {
+    final String? qrValue = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(builder: (_) => const QrScannerScreen()),
+    );
+    if (!mounted || qrValue == null || qrValue.isEmpty) {
+      return;
+    }
+    try {
+      final Map<String, dynamic> payload = jsonDecode(qrValue) as Map<String, dynamic>;
+      if (payload['claimId']?.toString() != claimId) {
+        AppFeedback.showError(context, 'This QR code belongs to a different claim');
+        return;
+      }
+      controller.text = payload['pickupCode']?.toString() ?? '';
+    } catch (_) {
+      controller.text = qrValue;
     }
   }
 }

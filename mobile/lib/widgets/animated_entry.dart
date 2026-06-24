@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedEntry extends StatefulWidget {
@@ -42,6 +43,10 @@ class _AnimatedEntryState extends State<AnimatedEntry> {
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      return widget.child;
+    }
+
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
 
     if (reduceMotion) {

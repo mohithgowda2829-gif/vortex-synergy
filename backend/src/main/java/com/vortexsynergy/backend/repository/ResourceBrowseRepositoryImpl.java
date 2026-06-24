@@ -75,8 +75,8 @@ public class ResourceBrowseRepositoryImpl implements ResourceBrowseRepository {
         );
 
         if (query.resourceType() != null) {
-            sql.append(" AND r.resource_type = :resourceType");
-            parameters.addValue("resourceType", query.resourceType().name());
+            sql.append(" AND LOWER(r.resource_type) = :resourceType ");
+            parameters.addValue("resourceType", query.resourceType().name().toLowerCase());
         }
         if (query.searchQuery() != null && !query.searchQuery().isBlank()) {
             sql.append(

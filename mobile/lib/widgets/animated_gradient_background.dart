@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AnimatedGradientBackground extends StatefulWidget {
@@ -33,6 +34,15 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
 
   @override
   Widget build(BuildContext context) {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      return DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Color(0xFFF1EEE2),
+        ),
+        child: widget.child,
+      );
+    }
+
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
     if (reduceMotion) {
       return _buildBackground(0.35);

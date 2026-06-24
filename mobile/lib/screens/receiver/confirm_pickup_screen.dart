@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../api/claim_api.dart';
 import '../../config/app_feedback.dart';
@@ -10,6 +13,7 @@ import '../../widgets/app_scaffold.dart';
 import '../../widgets/detail_row.dart';
 import '../../widgets/status_chip.dart';
 import '../common/timeline_screen.dart';
+import '../common/chat_screen.dart';
 import 'delivery_tracking_screen.dart';
 
 class ConfirmPickupScreen extends StatefulWidget {
@@ -53,6 +57,20 @@ class _ConfirmPickupScreenState extends State<ConfirmPickupScreen> {
                     _claim.pickupCode ?? 'Unavailable',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
+                  if (_claim.pickupCode != null) ...<Widget>[
+                    const SizedBox(height: 16),
+                    Center(
+                      child: QrImageView(
+                        data: jsonEncode(<String, dynamic>{
+                          'claimId': _claim.id,
+                          'pickupCode': _claim.pickupCode,
+                          'resourceTitle': _claim.resourceTitle,
+                        }),
+                        version: QrVersions.auto,
+                        size: 180,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -98,12 +116,29 @@ class _ConfirmPickupScreenState extends State<ConfirmPickupScreen> {
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: _working ? null : _openDeliveryTracking,
-                        child: const Text('Open Delivery Tracking'),
-                      ),
+                    child: OutlinedButton(
+                      onPressed: _working ? null : _openDeliveryTracking,
+                      child: const Text('Open Delivery Tracking'),
                     ),
-                  ],
+                  ),
+                ],
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ChatScreen(
+                              claimId: _claim.id,
+                              title: 'Claim Chat',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const Text('Open Chat'),
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   Align(
                     alignment: Alignment.centerRight,

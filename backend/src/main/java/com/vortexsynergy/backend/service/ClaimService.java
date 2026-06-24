@@ -48,6 +48,7 @@ public class ClaimService {
     private final AuditService auditService;
     private final PriorityService priorityService;
     private final NotificationService notificationService;
+    private final InventoryService inventoryService;
 
     @Value("${app.claim.reservation-hours}")
     private long reservationHours;
@@ -339,6 +340,7 @@ public class ClaimService {
         Resource resource = claim.getResource();
         resource.setStatus(resource.getAvailableQuantity() > 0 ? ResourceStatus.AVAILABLE : ResourceStatus.CLAIMED);
         resourceRepository.save(resource);
+        inventoryService.stockClaim(claim);
 
         auditService.log(actor, "CLAIM_COMPLETED", "CLAIM", claim.getId().toString(), note);
     }
